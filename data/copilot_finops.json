@@ -1,0 +1,208 @@
+{
+  "last_updated": "2026-09-24T20:49:56.728523+00:00",
+  "source": "fallback-sample-data",
+  "summary": {
+    "total_budget": 1978.35,
+    "total_consumed": 1648.66,
+    "total_available": 329.69,
+    "critical_alert_users": 3,
+    "blocked_users": 6,
+    "total_users": 12
+  },
+  "cost_centers": [
+    {
+      "name": "Platform",
+      "budget_assigned": 281.59,
+      "credits_consumed": 281.59,
+      "user_count": 2
+    },
+    {
+      "name": "Product",
+      "budget_assigned": 825.81,
+      "credits_consumed": 644.73,
+      "user_count": 5
+    },
+    {
+      "name": "Data & AI",
+      "budget_assigned": 687.42,
+      "credits_consumed": 538.81,
+      "user_count": 4
+    },
+    {
+      "name": "Engineering",
+      "budget_assigned": 183.53,
+      "credits_consumed": 183.53,
+      "user_count": 1
+    }
+  ],
+  "users": [
+    {
+      "login": "adiaz",
+      "email": "adiaz@example.com",
+      "full_name": "Ana Diaz",
+      "cost_center": "Platform",
+      "budget_assigned": 209.86,
+      "credits_consumed": 209.86,
+      "available": 0.0,
+      "pct_consumed": 100.0,
+      "inactivity_days": 45,
+      "prevent_further_usage": true,
+      "status": "blocked",
+      "recommended_action": "Revisar y ampliar presupuesto o desactivar el acceso"
+    },
+    {
+      "login": "bcohen",
+      "email": "bcohen@example.com",
+      "full_name": "Ben Cohen",
+      "cost_center": "Platform",
+      "budget_assigned": 71.73,
+      "credits_consumed": 71.73,
+      "available": 0.0,
+      "pct_consumed": 100.0,
+      "inactivity_days": 2,
+      "prevent_further_usage": true,
+      "status": "blocked",
+      "recommended_action": "Revisar y ampliar presupuesto o desactivar el acceso"
+    },
+    {
+      "login": "cruiz",
+      "email": "cruiz@example.com",
+      "full_name": "Carla Ruiz",
+      "cost_center": "Product",
+      "budget_assigned": 154.88,
+      "credits_consumed": 154.88,
+      "available": 0.0,
+      "pct_consumed": 100.0,
+      "inactivity_days": 15,
+      "prevent_further_usage": true,
+      "status": "blocked",
+      "recommended_action": "Revisar y ampliar presupuesto o desactivar el acceso"
+    },
+    {
+      "login": "dkim",
+      "email": "dkim@example.com",
+      "full_name": "David Kim",
+      "cost_center": "Product",
+      "budget_assigned": 119.47,
+      "credits_consumed": 20.32,
+      "available": 99.15,
+      "pct_consumed": 17.01,
+      "inactivity_days": 5,
+      "prevent_further_usage": false,
+      "status": "ok",
+      "recommended_action": "Sin acción requerida"
+    },
+    {
+      "login": "epatel",
+      "email": "epatel@example.com",
+      "full_name": "Elena Patel",
+      "cost_center": "Product",
+      "budget_assigned": 200.93,
+      "credits_consumed": 128.12,
+      "available": 72.81,
+      "pct_consumed": 63.76,
+      "inactivity_days": 30,
+      "prevent_further_usage": false,
+      "status": "ok",
+      "recommended_action": "Sin acción requerida"
+    },
+    {
+      "login": "fgomez",
+      "email": "fgomez@example.com",
+      "full_name": "Felipe Gomez",
+      "cost_center": "Data & AI",
+      "budget_assigned": 257.35,
+      "credits_consumed": 125.75,
+      "available": 131.6,
+      "pct_consumed": 48.86,
+      "inactivity_days": 45,
+      "prevent_further_usage": false,
+      "status": "ok",
+      "recommended_action": "Evaluar revocación de licencia por inactividad"
+    },
+    {
+      "login": "gnovak",
+      "email": "gnovak@example.com",
+      "full_name": "Greta Novak",
+      "cost_center": "Product",
+      "budget_assigned": 243.27,
+      "credits_consumed": 234.15,
+      "available": 9.12,
+      "pct_consumed": 96.25,
+      "inactivity_days": 15,
+      "prevent_further_usage": false,
+      "status": "alert",
+      "recommended_action": "Notificar al usuario y monitorear consumo"
+    },
+    {
+      "login": "hchen",
+      "email": "hchen@example.com",
+      "full_name": "Hugo Chen",
+      "cost_center": "Data & AI",
+      "budget_assigned": 90.66,
+      "credits_consumed": 90.66,
+      "available": 0.0,
+      "pct_consumed": 100.0,
+      "inactivity_days": 45,
+      "prevent_further_usage": true,
+      "status": "blocked",
+      "recommended_action": "Revisar y ampliar presupuesto o desactivar el acceso"
+    },
+    {
+      "login": "isilva",
+      "email": "isilva@example.com",
+      "full_name": "Ines Silva",
+      "cost_center": "Engineering",
+      "budget_assigned": 183.53,
+      "credits_consumed": 183.53,
+      "available": 0.0,
+      "pct_consumed": 100.0,
+      "inactivity_days": 5,
+      "prevent_further_usage": true,
+      "status": "blocked",
+      "recommended_action": "Revisar y ampliar presupuesto o desactivar el acceso"
+    },
+    {
+      "login": "jmartin",
+      "email": "jmartin@example.com",
+      "full_name": "Jorge Martin",
+      "cost_center": "Product",
+      "budget_assigned": 107.26,
+      "credits_consumed": 107.26,
+      "available": 0.0,
+      "pct_consumed": 100.0,
+      "inactivity_days": 45,
+      "prevent_further_usage": true,
+      "status": "blocked",
+      "recommended_action": "Revisar y ampliar presupuesto o desactivar el acceso"
+    },
+    {
+      "login": "klopez",
+      "email": "klopez@example.com",
+      "full_name": "Karen Lopez",
+      "cost_center": "Data & AI",
+      "budget_assigned": 103.16,
+      "credits_consumed": 99.87,
+      "available": 3.29,
+      "pct_consumed": 96.81,
+      "inactivity_days": 2,
+      "prevent_further_usage": false,
+      "status": "alert",
+      "recommended_action": "Notificar al usuario y monitorear consumo"
+    },
+    {
+      "login": "lsantos",
+      "email": "lsantos@example.com",
+      "full_name": "Lucas Santos",
+      "cost_center": "Data & AI",
+      "budget_assigned": 236.25,
+      "credits_consumed": 222.53,
+      "available": 13.72,
+      "pct_consumed": 94.19,
+      "inactivity_days": 2,
+      "prevent_further_usage": false,
+      "status": "alert",
+      "recommended_action": "Notificar al usuario y monitorear consumo"
+    }
+  ]
+}

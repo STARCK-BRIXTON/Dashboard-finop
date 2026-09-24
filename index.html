@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Copilot FinOps Dashboard</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.1/chart.umd.min.js"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        colors: {
+          surface: '#0f1117',
+          panel: '#161922',
+          panel2: '#1d212c',
+          border: '#2a2f3d',
+          accent: '#6366f1',
+          ok: '#22c55e',
+          warn: '#eab308',
+          crit: '#ef4444',
+        }
+      }
+    }
+  }
+</script>
+<style>
+  html { background-color: #0f1117; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: #161922; }
+  ::-webkit-scrollbar-thumb { background: #2a2f3d; border-radius: 6px; }
+  .progress-track { background: #2a2f3d; }
+  .fade-in { animation: fadeIn .3s ease-in; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+</head>
+<body class="dark bg-surface text-slate-200 font-sans min-h-screen">
+
+<div class="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+  <!-- Header -->
+  <header class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+    <div>
+      <h1 class="text-2xl sm:text-3xl font-bold text-white tracking-tight">Copilot FinOps Dashboard</h1>
+      <p class="text-slate-400 text-sm mt-1">Monitoreo de créditos IA, presupuestos y centros de coste</p>
+    </div>
+    <div class="flex items-center gap-3 bg-panel border border-border rounded-xl px-4 py-3">
+      <span id="cronDot" class="w-2.5 h-2.5 rounded-full bg-ok shrink-0 animate-pulse"></span>
+      <div class="text-sm leading-tight">
+        <div class="text-slate-300" id="cronStatus">Sincronización automática activa</div>
+        <div class="text-slate-500 text-xs" id="lastSync">Última sync: --</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- KPIs -->
+  <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-8">
+    <div class="bg-panel border border-border rounded-xl p-5">
+      <div class="text-slate-400 text-xs font-medium uppercase tracking-wide">Presupuesto Total</div>
+      <div class="text-2xl font-bold text-white mt-2" id="kpiTotalBudget">$0.00</div>
+      <div class="text-xs text-slate-500 mt-1">Configurado a nivel de organización</div>
+    </div>
+    <div class="bg-panel border border-border rounded-xl p-5">
+      <div class="text-slate-400 text-xs font-medium uppercase tracking-wide">Consumo Total</div>
+      <div class="text-2xl font-bold text-white mt-2" id="kpiTotalConsumed">$0.00</div>
+      <div class="text-xs text-slate-500 mt-1"><span id="kpiRemaining">$0.00</span> restante</div>
+    </div>
+    <div class="bg-panel border border-border rounded-xl p-5">
+      <div class="text-slate-400 text-xs font-medium uppercase tracking-wide">Alerta Crítica (&ge;80%)</div>
+      <div class="text-2xl font-bold text-warn mt-2" id="kpiAlertUsers">0</div>
+      <div class="text-xs text-slate-500 mt-1">Usuarios cerca del límite</div>
+    </div>
+    <div class="bg-panel border border-border rounded-xl p-5">
+      <div class="text-slate-400 text-xs font-medium uppercase tracking-wide">Bloqueados (100%)</div>
+      <div class="text-2xl font-bold text-crit mt-2" id="kpiBlockedUsers">0</div>
+      <div class="text-xs text-slate-500 mt-1">Uso adicional prevenido</div>
+    </div>
+  </section>
+
+  <!-- Charts -->
+  <section class="grid grid-cols-1 lg:grid-cols-5 gap-4 mb-8">
+    <div class="lg:col-span-2 bg-panel border border-border rounded-xl p-5">
+      <h2 class="text-sm font-semibold text-slate-200 mb-4">Gasto por Centro de Coste (Chargeback)</h2>
+      <div class="relative h-72">
+        <canvas id="costCenterDonut"></canvas>
+      </div>
+    </div>
+    <div class="lg:col-span-3 bg-panel border border-border rounded-xl p-5">
+      <h2 class="text-sm font-semibold text-slate-200 mb-4">Consumo de Crédito vs Inactividad por Desarrollador</h2>
+      <div class="relative h-72">
+        <canvas id="usageScatter"></canvas>
+      </div>
+    </div>
+  </section>
+
+  <!-- Filters -->
+  <section class="bg-panel border border-border rounded-xl p-4 mb-4 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
+    <input id="filterSearch" type="text" placeholder="Buscar por nombre o email..."
+      class="bg-panel2 border border-border rounded-lg px-3 py-2 text-sm placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-accent" />
+    <select id="filterCostCenter" class="bg-panel2 border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent">
+      <option value="">Todos los Centros de Coste</option>
+    </select>
+    <select id="filterStatus" class="bg-panel2 border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent">
+      <option value="">Todos los Estados</option>
+      <option value="ok">Bajo Presupuesto &lt;80%</option>
+      <option value="alert">Alerta &ge;80%</option>
+      <option value="blocked">Bloqueado 100%</option>
+    </select>
+    <select id="filterActivity" class="bg-panel2 border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent">
+      <option value="">Toda Actividad</option>
+      <option value="active">Activos</option>
+      <option value="inactive">Inactivos &gt;30 días</option>
+    </select>
+  </section>
+
+  <!-- Table -->
+  <section class="bg-panel border border-border rounded-xl overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="text-left text-slate-400 uppercase text-xs border-b border-border bg-panel2">
+            <th class="px-4 py-3 font-medium">Usuario</th>
+            <th class="px-4 py-3 font-medium">Centro de Costes</th>
+            <th class="px-4 py-3 font-medium text-right">Budget ($)</th>
+            <th class="px-4 py-3 font-medium text-right">Consumido ($)</th>
+            <th class="px-4 py-3 font-medium text-right">Disponible ($)</th>
+            <th class="px-4 py-3 font-medium min-w-[160px]">% Consumido</th>
+            <th class="px-4 py-3 font-medium text-right">Inactividad</th>
+            <th class="px-4 py-3 font-medium">Estado</th>
+            <th class="px-4 py-3 font-medium">Acción Recomendada</th>
+          </tr>
+        </thead>
+        <tbody id="usersTableBody" class="divide-y divide-border"></tbody>
+      </table>
+    </div>
+    <div id="emptyState" class="hidden text-center py-10 text-slate-500 text-sm">
+      No se encontraron usuarios con los filtros seleccionados.
+    </div>
+  </section>
+
+  <footer class="text-center text-slate-600 text-xs mt-8 pb-4">
+    Datos generados automáticamente cada 2 horas vía GitHub Actions &middot; Fuente: <span id="dataSource">--</span>
+  </footer>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  const DATA_URL = './data/copilot_finops.json';
+  const INACTIVITY_THRESHOLD = 30;
+
+  const state = {
+    raw: null,
+    users: [],
+  };
+
+  const els = {
+    lastSync: document.getElementById('lastSync'),
+    cronStatus: document.getElementById('cronStatus'),
+    cronDot: document.getElementById('cronDot'),
+    dataSource: document.getElementById('dataSource'),
+    kpiTotalBudget: document.getElementById('kpiTotalBudget'),
+    kpiTotalConsumed: document.getElementById('kpiTotalConsumed'),
+    kpiRemaining: document.getElementById('kpiRemaining'),
+    kpiAlertUsers: document.getElementById('kpiAlertUsers'),
+    kpiBlockedUsers: document.getElementById('kpiBlockedUsers'),
+    filterSearch: document.getElementById('filterSearch'),
+    filterCostCenter: document.getElementById('filterCostCenter'),
+    filterStatus: document.getElementById('filterStatus'),
+    filterActivity: document.getElementById('filterActivity'),
+    tableBody: document.getElementById('usersTableBody'),
+    emptyState: document.getElementById('emptyState'),
+  };
+
+  const fmtUSD = (n) => `$${Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+  const statusMeta = {
+    ok: { label: 'Bajo Presupuesto', badge: 'bg-ok/15 text-ok border-ok/30', bar: 'bg-ok' },
+    alert: { label: 'Alerta', badge: 'bg-warn/15 text-warn border-warn/30', bar: 'bg-warn' },
+    blocked: { label: 'Bloqueado', badge: 'bg-crit/15 text-crit border-crit/30', bar: 'bg-crit' },
+  };
+
+  let donutChart = null;
+  let scatterChart = null;
+
+  async function loadData() {
+    try {
+      const res = await fetch(DATA_URL, { cache: 'no-store' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      state.raw = json;
+      state.users = json.users || [];
+      render();
+    } catch (err) {
+      els.cronStatus.textContent = 'Error al cargar datos';
+      els.cronDot.classList.remove('bg-ok');
+      els.cronDot.classList.add('bg-crit');
+      els.lastSync.textContent = `No se pudo cargar ${DATA_URL}: ${err.message}`;
+      console.error('Error cargando FinOps data:', err);
+    }
+  }
+
+  function populateCostCenterFilter() {
+    const centers = Array.from(new Set(state.users.map((u) => u.cost_center))).sort();
+    const select = els.filterCostCenter;
+    const current = select.value;
+    select.innerHTML = '<option value="">Todos los Centros de Coste</option>' +
+      centers.map((c) => `<option value="${c}">${c}</option>`).join('');
+    select.value = current;
+  }
+
+  function renderHeader() {
+    const raw = state.raw;
+    if (!raw) return;
+    const date = new Date(raw.last_updated);
+    els.lastSync.textContent = `Última sync: ${date.toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' })}`;
+    els.dataSource.textContent = raw.source || 'desconocido';
+    els.cronStatus.textContent = 'Sincronización automática activa (cada 2h)';
+  }
+
+  function renderKpis() {
+    const s = state.raw?.summary || {};
+    els.kpiTotalBudget.textContent = fmtUSD(s.total_budget);
+    els.kpiTotalConsumed.textContent = fmtUSD(s.total_consumed);
+    els.kpiRemaining.textContent = fmtUSD(s.total_available);
+    els.kpiAlertUsers.textContent = s.critical_alert_users ?? 0;
+    els.kpiBlockedUsers.textContent = s.blocked_users ?? 0;
+  }
+
+  function getFilteredUsers() {
+    const search = els.filterSearch.value.trim().toLowerCase();
+    const costCenter = els.filterCostCenter.value;
+    const status = els.filterStatus.value;
+    const activity = els.filterActivity.value;
+
+    return state.users.filter((u) => {
+      if (search) {
+        const haystack = `${u.login} ${u.full_name || ''} ${u.email}`.toLowerCase();
+        if (!haystack.includes(search)) return false;
+      }
+      if (costCenter && u.cost_center !== costCenter) return false;
+      if (status && u.status !== status) return false;
+      if (activity === 'active' && (u.inactivity_days ?? 0) > INACTIVITY_THRESHOLD) return false;
+      if (activity === 'inactive' && !((u.inactivity_days ?? 0) > INACTIVITY_THRESHOLD)) return false;
+      return true;
+    });
+  }
+
+  function renderTable() {
+    const users = getFilteredUsers();
+    els.emptyState.classList.toggle('hidden', users.length > 0);
+
+    els.tableBody.innerHTML = users.map((u) => {
+      const meta = statusMeta[u.status] || statusMeta.ok;
+      const pct = Math.min(Math.max(u.pct_consumed || 0, 0), 100);
+      const displayName = u.full_name ? `${u.full_name} <span class="text-slate-500">(@${u.login})</span>` : `@${u.login}`;
+      const inactivityLabel = u.inactivity_days == null ? '—' : `${u.inactivity_days}d`;
+      const inactivityClass = (u.inactivity_days ?? 0) > INACTIVITY_THRESHOLD ? 'text-warn' : 'text-slate-400';
+
+      return `
+        <tr class="fade-in hover:bg-panel2/60 transition-colors">
+          <td class="px-4 py-3">
+            <div class="text-slate-100 font-medium">${displayName}</div>
+            <div class="text-slate-500 text-xs">${u.email}</div>
+          </td>
+          <td class="px-4 py-3 text-slate-300">${u.cost_center}</td>
+          <td class="px-4 py-3 text-right text-slate-300">${fmtUSD(u.budget_assigned)}</td>
+          <td class="px-4 py-3 text-right text-slate-300">${fmtUSD(u.credits_consumed)}</td>
+          <td class="px-4 py-3 text-right text-slate-300">${fmtUSD(u.available)}</td>
+          <td class="px-4 py-3">
+            <div class="flex items-center gap-2">
+              <div class="flex-1 h-2 rounded-full progress-track overflow-hidden">
+                <div class="h-full rounded-full ${meta.bar}" style="width:${pct}%"></div>
+              </div>
+              <span class="text-xs text-slate-400 w-10 text-right">${pct.toFixed(0)}%</span>
+            </div>
+          </td>
+          <td class="px-4 py-3 text-right ${inactivityClass}">${inactivityLabel}</td>
+          <td class="px-4 py-3">
+            <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium border ${meta.badge}">
+              ${meta.label}${u.prevent_further_usage ? ' · Prevenido' : ''}
+            </span>
+          </td>
+          <td class="px-4 py-3 text-slate-400 text-xs max-w-[220px]">${u.recommended_action || '—'}</td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function renderDonut() {
+    const centers = state.raw?.cost_centers || [];
+    const ctx = document.getElementById('costCenterDonut');
+    const palette = ['#6366f1', '#22c55e', '#eab308', '#ef4444', '#06b6d4', '#a855f7', '#f97316', '#ec4899'];
+
+    if (donutChart) donutChart.destroy();
+    donutChart = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: centers.map((c) => c.name),
+        datasets: [{
+          data: centers.map((c) => c.credits_consumed),
+          backgroundColor: centers.map((_, i) => palette[i % palette.length]),
+          borderColor: '#161922',
+          borderWidth: 2,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { color: '#cbd5e1', boxWidth: 12, padding: 12, font: { size: 11 } } },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => ` ${ctx.label}: ${fmtUSD(ctx.parsed)}`,
+            },
+          },
+        },
+      },
+    });
+  }
+
+  function renderScatter() {
+    const users = state.users;
+    const ctx = document.getElementById('usageScatter');
+    const colorFor = (u) => u.status === 'blocked' ? '#ef4444' : u.status === 'alert' ? '#eab308' : '#22c55e';
+
+    if (scatterChart) scatterChart.destroy();
+    scatterChart = new Chart(ctx, {
+      type: 'scatter',
+      data: {
+        datasets: [{
+          label: 'Usuarios',
+          data: users.map((u) => ({ x: u.inactivity_days ?? 0, y: u.credits_consumed, meta: u })),
+          backgroundColor: users.map(colorFor),
+          pointRadius: 6,
+          pointHoverRadius: 8,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: {
+            title: { display: true, text: 'Días de Inactividad', color: '#94a3b8' },
+            ticks: { color: '#94a3b8' },
+            grid: { color: '#2a2f3d' },
+          },
+          y: {
+            title: { display: true, text: 'Créditos Consumidos ($)', color: '#94a3b8' },
+            ticks: { color: '#94a3b8' },
+            grid: { color: '#2a2f3d' },
+          },
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => {
+                const u = ctx.raw.meta;
+                return ` ${u.login}: ${fmtUSD(u.credits_consumed)} · ${u.inactivity_days ?? 0}d inactivo`;
+              },
+            },
+          },
+        },
+      },
+    });
+  }
+
+  function render() {
+    populateCostCenterFilter();
+    renderHeader();
+    renderKpis();
+    renderTable();
+    renderDonut();
+    renderScatter();
+  }
+
+  [els.filterSearch, els.filterCostCenter, els.filterStatus, els.filterActivity].forEach((el) => {
+    el.addEventListener('input', renderTable);
+    el.addEventListener('change', renderTable);
+  });
+
+  loadData();
+})();
+</script>
+</body>
+</html>
